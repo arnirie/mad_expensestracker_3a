@@ -30,16 +30,60 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
       builder: (_) => ExpensesEntry(
         addItem: addExpensesItem,
       ),
+      isScrollControlled: true,
     );
   }
 
+  void undoAddExpensesItem(ExpensesItem item) {
+    setState(() {
+      _expensesList.remove(item);
+    });
+  }
+
   void addExpensesItem(ExpensesItem item) {
-    _expensesList.add(item);
-    setState(() {});
+    setState(() {
+      _expensesList.add(item);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('A new entry was added.'),
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () => undoAddExpensesItem(item),
+          ),
+        ),
+      );
+    });
+  }
+
+  void removeExpensesItem(ExpensesItem item) {
+    //get the index before remove
+    var index = _expensesList.indexOf(item);
+    setState(() {
+      _expensesList.remove(item);
+    });
+    print('list count: ${_expensesList.length}');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Item removed.'),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () => undoRemoveItem(item, index),
+        ),
+      ),
+    );
+  }
+
+  void undoRemoveItem(ExpensesItem item, int index) {
+    print(index);
+    setState(() {
+      // _expensesList.add(item);
+      _expensesList.insert(index, item);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    var width = MediaQuery.of(context).size.width;
     return Scaffold(
       appBar: AppBar(
         // backgroundColor: Colors.blu,
@@ -54,9 +98,20 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
       body: Column(
         children: [
           Expanded(
-            child: ExpensesListView(
-              expensesList: _expensesList,
-            ),
+            child: _expensesList.isNotEmpty
+                ? ExpensesListView(
+                    expensesList: _expensesList,
+                    removeItem: removeExpensesItem,
+                  )
+                : Center(
+                    child: Opacity(
+                      opacity: 0.3,
+                      child: Image.asset(
+                        'assets/images/empty_list.png',
+                        width: width * 0.3,
+                      ),
+                    ),
+                  ),
           ),
         ],
       ),
